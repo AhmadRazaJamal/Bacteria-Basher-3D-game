@@ -1,0 +1,124 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="utf-8" />
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <title>Project Assignment 1 - COSC 414</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <link rel="stylesheet" href="https://stackpath.bootstrapcdn.com/bootstrap/4.3.1/css/bootstrap.min.css" integrity="sha384-ggOyR0iXCbMQv3Xipma34MD+dH/1fQ784/j6cY/iJTQUOhcWr7x9JvoRxT2MZw1T" crossorigin="anonymous">
+    <!-- <link rel="stylesheet" type="text/css" media="screen"/> -->
+   
+    <script 
+    src="https://cdnjs.cloudflare.com/ajax/libs/gl-matrix/2.8.1/gl-matrix-min.js"
+    integrity="sha512-zhHQR0/H5SEBL3Wn6yYSaTTZej12z0hVZKOv3TwCUXT1z5qeqGcXJLLrbERYRScEDDpYIJhPC1fk31gqR783iQ=="
+    crossorigin="anonymous" defer>
+    </script>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300&display=swap" rel="stylesheet">
+    <script type="text/javascript" src="main.js" defer></script>
+</head>
+
+<style>
+#start, #restart {
+  border: none;
+  background: #ACDF87;
+  color: white;
+  padding: 10px 10px;
+  text-align: center;
+  text-decoration: none;
+  display: inline-block;
+  font-size: 16px;
+  margin: 4px 2px;
+  cursor: pointer;
+  border-radius: 1em;
+}
+
+.buttonImg {
+    width: 30px;
+    height: 30px;
+    border-radius: 1em;
+}
+
+h1 {
+    font-family: 'Poppins';
+    font-weight: 800;
+    font-size: 4em;
+}
+
+input {
+    padding: 1em 2em 1em 2em;
+    font-family: 'Poppins';
+    background-color: #FF97FF;
+    border-radius: 1em;
+    border-color: deeppink;
+    border-width: 2px;
+    margin: 0.4em;
+    display: inline;
+    width: 200px;
+}
+
+.inline-btns {
+    display: inline;
+    width: 200px;
+}
+
+#instructions {
+    position: absolute;
+    top: 150px;
+    right: 40px;
+    text-align: left;
+    width: 380px;
+    border: 1px solid floralwhite;
+    padding: 20px;
+    text-align: center;
+    border-radius: 32px;
+    color: burlywood;
+    background: darkmagenta;
+}
+</style>
+
+<body style="background: linear-gradient(90deg, #efd5ff 0%, #515ada 100%); font-family: 'Poppins' ">
+    <div class="container" style="margin-left: 20px; padding-top: 15px;">
+        <div class="row">
+            <div class="col-10">
+                <h1 style="position: relative; left: -4px">Bacteria Basher</h1>
+                <p style=>Lives Left:
+                    <img id="heart_1" width="20px" height="20px" src="imgs/heart.png" style="margin-left: 10px; position: relative; top: -4px;"/>
+                    <img id="heart_2" width="20px" height="20px" src="imgs/heart.png" style="margin-left: 10px; position: relative; top: -4px;"/>
+                    <img id="dead" width="80px" height="70px" src="imgs/dead.png" style="margin-left: 10px; position: relative; top: 4px; display: none"/>
+                </p>
+                <p style="display: inline">Player Score: </p><p id="player_score" style="display: inline"></p>
+            </div>
+            <div class="col-2">
+                <div style="display: inline-flex">
+                    <input type="button" value="PLAY" onclick="pressPlay()"/>
+                    <input type="button" value="RESTART" onclick="pressRestart()"/>
+                </div>
+            </div>
+        </div> 
+        <div class="row">
+            <div class="col-12" style="margin-left: 18px">
+                <h3 style="text-align: center; margin-left: 165px; margin-top: 200px; color: black;" id="pressPlayTxt">Press Play to Begin!</h3>
+                <h3 style="text-align: center; margin-left: 165px; display: none; color: deeppink;" id="gameOver">GAME OVER. Player Score: </h3>
+                <h3 style="text-align: center; margin-left: 165px; display: none; color: deeppink;" id="gameWon">You win a cookie! 🍪</h3>
+            </div>
+        </div>
+    </div>
+    <canvas style="margin-left: 35%; width: 400px; height: 400px" id="webgl"></canvas>
+    <canvas style="margin-left: 15%; left: 230px; width: 400px; height: 400px; position: absolute; z-index: -9" id="particleCanvas"></canvas>
+        <div id="instructions">
+            <p id="pressPlayTxt">
+                <strong>How to Play?</strong>
+                <p>Click on the bacteria to administer poison</p>
+                <p>You win if you poison 15 bacteria</p>
+                <p>You lose if 2 bacteria reach a game determined threshold</p>
+            </p>
+        </div>
+
+    <!-- Bootstrap -->
+    <script src="https://code.jquery.com/jquery-3.3.1.slim.min.js" integrity="sha384-q8i/X+965DzO0rT7abK41JStQIAqVgRVzpbzo5smXKp4YfRvH+8abtTE1Pi6jizo" crossorigin="anonymous"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/popper.js/1.14.7/umd/popper.min.js" integrity="sha384-UO2eT0CpHqdSJQ6hJty5KVphtPhzWj9WO1clHTMGa3JDZwrnQq4sF86dIHNDz0W1" crossorigin="anonymous"></script>
+    <script src="https://stackpath.bootstrapcdn.com/bootstrap/4.3.1/js/bootstrap.min.js" integrity="sha384-JjSmVgyd0p3pXB1rRibZUAYoIIy6OrQ6VrjIEaFf/nJGzIxFDsf4x0xIM+B07jRM" crossorigin="anonymous"></script>
+</body>
+</html>
