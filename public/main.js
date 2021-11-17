@@ -1,12 +1,26 @@
 // Write the vertex shader and fragment shader functions
 var vertexShaderText = [
-    'attribute vec3 vertPosition;',
+
+    'uniform mat4 modelMatrix;',
+    'uniform mat4 cameraMatrix;',
+    'uniform mat4 projectionMatrix;',
+
+    'attribute vec4 vertexPosition;',
+    'attribute vec3 vertexColor;',
+    'attribute vec3 vertexNormal;',
+
+    'uniform vec3 lightPosition;',
+    'uniform vec3 lightColor;',
+    'uniform float lightAmbient;',
+    'uniform float lightDiffuse;',
+    'uniform float lightSpecular;',
+
     'varying vec3 fragColor;',
-    'attribute vec3 vertColor;',
     '',
     'void main() {',
-    '	fragColor = vertColor;',
-    '	gl_Position = vec4(vertPosition, 1.0);',
+    '	fragColor = vertexColor;',
+    '	gl_Position = projectionMatrix * cameraMatrix, modelMatrix * vertexPosition',
+    '   fs_point = cameraMatrix * modelMatrix * vertexPosition;',
     '}'
 ].join('\n');
 
@@ -30,6 +44,14 @@ var playerLives;
 
 
 function bacteriaBasher() {
+
+    /* 
+    Sphere information 
+    */
+    const lightPlacement = vec3.fromValues(2.0, 2.0, 2.0);
+    const lightColour = vec3.fromValues(1.0, 1.0, 1.0);
+
+    const sphereResolution = 5;
 
     /* 
     SET UP WEBGL PTX
