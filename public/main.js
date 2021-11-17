@@ -39,6 +39,10 @@ function bacteriaBasher() {
     // Initialize the GL ptx
     const gl = canvas.getContext("webgl");
 
+    gl.enable(gl.DEPTH_TEST);
+    gl.enable(gl.CULL_FACE);
+    gl.cullFace(gl.BACK);
+
     // Only continue if WebGL is available and working
     if (gl === null) {
         alert("Unable to initialize WebGL. Your browser or machine may not support it.");
@@ -64,8 +68,8 @@ function bacteriaBasher() {
     var vertexShader = gl.createShader(gl.VERTEX_SHADER);
     var fragmentShader = gl.createShader(gl.FRAGMENT_SHADER);
 
-    gl.shaderSource(vertexShader, vertexShaderText);
-    gl.shaderSource(fragmentShader, fragmentShaderText);
+    gl.shaderSource(vertexShader, document.getElementById("vertex_shader").innerHTML);
+    gl.shaderSource(fragmentShader, document.getElementById("fragment_shader").innerHTML);
 
     gl.compileShader(vertexShader);
     if (!gl.getShaderParameter(vertexShader, gl.COMPILE_STATUS)) {
@@ -422,28 +426,92 @@ function bacteriaBasher() {
         explosion();
     }
 
-    for (var i = 0; i < totalBacteria; i++) {
-        var createdBacteria = createBacteria();
-        bacteriaArray.push(createdBacteria);
-        drawCircle(createdBacteria.x, createdBacteria.y, createdBacteria.r, false, i);
-    }
+    // for (var i = 0; i < totalBacteria; i++) {
+    //     var createdBacteria = createBacteria();
+    //     bacteriaArray.push(createdBacteria);
+    //     drawCircle(createdBacteria.x, createdBacteria.y, createdBacteria.r, false, i);
+    // }
 
-    // Starts the game and loops till either all bacteria are killed or player lives are equal to zero
-    function startGame() {
-        // Updates the score span element in the html
-        for (i in bacteriaArray) {
-            increaseBacteriaSize(bacteriaArray[i], i);
-        }
-        drawCircle(0, 0, 0.6, false);
-        if (playerLives > 0) {
-            checkForWin();
-            requestAnimationFrame(startGame);
-        } else {
-            gameOver.style.display = "block";
-            document.getElementById("gameOver").innerText += " " + gameScore;
-        }
-    }
-    requestAnimationFrame(startGame);
+    // // Starts the game and loops till either all bacteria are killed or player lives are equal to zero
+    // function startGame() {
+    //     // Updates the score span element in the html
+    //     for (i in bacteriaArray) {
+    //         increaseBacteriaSize(bacteriaArray[i], i);
+    //     }
+    //     drawCircle(0, 0, 0.6, false);
+    //     if (playerLives > 0) {
+    //         checkForWin();
+    //         requestAnimationFrame(startGame);
+    //     } else {
+    //         gameOver.style.display = "block";
+    //         document.getElementById("gameOver").innerText += " " + gameScore;
+    //     }
+    // }
+    // requestAnimationFrame(startGame);
+
+    var light_point = vec3.fromValues(2.0, 2.0, 2.0);
+    var light_colour = vec3.fromValues(1.0, 1.0, 1.0);
+
+    var vs_source = document.getElementById("vertex_shader").innerHTML;
+    var fs_source = document.getElementById("fragment_shader").innerHTML;
+
+    var uniforms = [
+        "modelMatrix",
+        "viewMatrix",
+        "projectionMatrix",
+
+        "one_colour",
+        "single_colour",
+        "use_texture",
+
+        "light_point",
+        "light_colour",
+
+        "light_ambient",
+        "light_diffuse",
+        "light_specular",
+
+        "tex_coord",
+
+        "fs_texture_sampler"
+    ];
+
+    var attributes = [
+        "point",
+        "colour",
+
+        "normal",
+        "tex_coord"
+    ];
+
+    const gle = new GLEnvironment(gl,
+        vs_source, fs_source,
+        uniforms, attributes);
+
+    gl.useProgram(gle.shader);
+    // gl.uniform1f(this.gle.uniforms.one_colour, 0.0);
+    // gl.uniform1f(this.gle.uniforms.use_texture, 0.0);
+
+    gl.disableVertexAttribArray(gle.attributes.tex_coord);
+
+    var ball = new Sphere(gle, 5);
+
+    init_view();
+    init_projection();
+
+    var gl2 = gle.gl;
+
+    gl2.clear(gl2.COLOR_BUFFER_BIT | gl2.DEPTH_BUFFER_BIT);
+
+    gl2.uniformMatrix4fv(gle.uniforms.viewMatrix, false, viewMatrix);
+    gl2.uniformMatrix4fv(gle.uniforms.projectionMatrix, false,
+        projectionMatrix);
+
+    gl2.uniform3fv(gle.uniforms.light_point, light_point);
+    gl2.uniform3fv(gle.uniforms.light_colour, light_colour);
+
+    ball.draw(program);
+
 }
 
 function pressPlay() {
@@ -479,4 +547,29 @@ function checkForWin() {
             bacteriaArray[i] = [];
         }
     }
+}
+
+/** Initializes the view matrix.
+ */
+init_view = function() {
+    var look_from = [0.0, 2.0, 3.0];
+    var look_at = [0.0, 0.0, 0.0];
+    var up = [0.0, 1.0, 0.0];
+
+    this.viewMatrix = mat4.create();
+    mat4.lookAt(this.viewMatrix, look_from, look_at, up);
+}
+
+/** Initializes the projection matrix.
+ */
+init_projection = function() {
+    var fov = glMatrix.toRadian(60);
+    var width = 400;
+    var height = 400;
+    var aspect = width / height;
+    var near = 0.1;
+    var far = 100.0;
+
+    this.projectionMatrix = mat4.create();
+    mat4.perspective(this.projectionMatrix, fov, aspect, near, far);
 }
