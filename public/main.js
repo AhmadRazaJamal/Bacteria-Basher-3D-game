@@ -1,6 +1,5 @@
 // Write the vertex shader and fragment shader functions
 var vertexShaderText = [
-
     'uniform mat4 modelMatrix;',
     'uniform mat4 cameraMatrix;',
     'uniform mat4 projectionMatrix;',
@@ -16,11 +15,11 @@ var vertexShaderText = [
     'uniform float lightSpecular;',
 
     'varying vec3 fragColor;',
+    'varying vec3 fs_view_point;',
     '',
     'void main() {',
     '	fragColor = vertexColor;',
-    '	gl_Position = projectionMatrix * cameraMatrix, modelMatrix * vertexPosition',
-    '   fs_point = cameraMatrix * modelMatrix * vertexPosition;',
+    '	gl_Position = projectionMatrix * cameraMatrix * modelMatrix * vertexPosition;',
     '}'
 ].join('\n');
 
@@ -44,7 +43,6 @@ var playerLives;
 
 
 function bacteriaBasher() {
-
     /* 
     Sphere information 
     */
@@ -60,6 +58,9 @@ function bacteriaBasher() {
     const particleCanvas = document.querySelector("#particleCanvas");
     // Initialize the GL ptx
     const gl = canvas.getContext("webgl");
+
+    // Enable depth for 3D shapes
+    gl.enable(gl.DEPTH_TEST);
 
     // Only continue if WebGL is available and working
     if (gl === null) {
@@ -444,28 +445,31 @@ function bacteriaBasher() {
         explosion();
     }
 
-    for (var i = 0; i < totalBacteria; i++) {
-        var createdBacteria = createBacteria();
-        bacteriaArray.push(createdBacteria);
-        drawCircle(createdBacteria.x, createdBacteria.y, createdBacteria.r, false, i);
-    }
+    // for (var i = 0; i < totalBacteria; i++) {
+    //     var createdBacteria = createBacteria();
+    //     bacteriaArray.push(createdBacteria);
+    //     drawCircle(createdBacteria.x, createdBacteria.y, createdBacteria.r, false, i);
+    // }
 
-    // Starts the game and loops till either all bacteria are killed or player lives are equal to zero
-    function startGame() {
-        // Updates the score span element in the html
-        for (i in bacteriaArray) {
-            increaseBacteriaSize(bacteriaArray[i], i);
-        }
-        drawCircle(0, 0, 0.6, false);
-        if (playerLives > 0) {
-            checkForWin();
-            requestAnimationFrame(startGame);
-        } else {
-            gameOver.style.display = "block";
-            document.getElementById("gameOver").innerText += " " + gameScore;
-        }
-    }
-    requestAnimationFrame(startGame);
+    // // Starts the game and loops till either all bacteria are killed or player lives are equal to zero
+    // function startGame() {
+    //     // Updates the score span element in the html
+    //     for (i in bacteriaArray) {
+    //         increaseBacteriaSize(bacteriaArray[i], i);
+    //     }
+    //     drawCircle(0, 0, 0.6, false);
+    //     if (playerLives > 0) {
+    //         checkForWin();
+    //         requestAnimationFrame(startGame);
+    //     } else {
+    //         gameOver.style.display = "block";
+    //         document.getElementById("gameOver").innerText += " " + gameScore;
+    //     }
+    // }
+    // requestAnimationFrame(startGame);
+
+    var ball = new Sphere(gl, this.sphere_resolution);
+    ball.draw(program);
 }
 
 function pressPlay() {
