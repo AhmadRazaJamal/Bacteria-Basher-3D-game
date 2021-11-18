@@ -134,6 +134,19 @@ function bacteriaBasher() {
         return rad;
     }
 
+    // Initialize Bacteria color array
+    var bacterColorsArray = [];
+
+    for (i = 0; i < remainingBacteria; i++) {
+        bacterColorsArray.push([Math.random(), Math.random(), Math.random()])
+    }
+
+    // Initialize Bacteria ids array 
+    var bacteriaIdArray = new Set();
+    for (var i = 0; i < remainingBacteria; i++) {
+        bacteriaIdArray.add(i + 3);
+    }
+
     // Function to draw a circle
     function drawCircle(x, y, r, isBacteria, index) {
         var vertices = [];
@@ -327,32 +340,38 @@ function bacteriaBasher() {
         return [x, y];
     }
 
-    function createBacteria() {
-        var id = Math.random();
-        var consumingBacteriaArray = [];
+    function createBacteria(maxBacteria, ids, gle) {
+        var radius = 0.06;
 
-        var bacteriaCoordinates = calculateBacteriaCoordinates();
+        if (bacteriaArray.length < maxBacteria) {
+            var r = vec3.fromValues(Math.random() - 0.5, Math.random() - 0.5, Math.random() - 0.5);
+            vec3.normalize(r, r);
 
-        var bacteria = { x: bacteriaCoordinates[0], y: bacteriaCoordinates[1], r: 0.07 }
+            var id = ids(bacteriaIdArray);
+            var bacteria = new Sphere(
+                gle,
+                5,
+                r,
+                radius,
+                bacterColorsArray[Math.floor(Math.random() * bacterColorsArray.length)],
+                bacterColorsArray[Math.floor(Math.random() * bacterColorsArray.length)],
+                0.3);
+            bacteria.id = id;
 
-        var calculatingNewCoordinates = 500;
-        // Loop to check if the new bacteria isn't colliding with any of the present bacteria
-        for (var i = 0; i < bacteriaArray.length; i++) {
-            if (bacteriaArray[i] == undefined) { continue; }
-            // If no more room is left for bacteria to be created
-            if (calculatingNewCoordinates == 0) {
-                break;
+            var pole = vec3.fromValues(0.0, 0.0, 1.0);
+
+            if (!vec3.equals(r, pole)) {
+                var axis = vec3.cross(vec3.create(), pole, r);
+                vec3.normalize(axis, axis);
+
+                var angle = Math.acos(vec3.dot(pole, r));
+                bacteria.rotation = mat4.rotate(mat4.create(), mat4.create(),
+                    angle, axis);
+                bacteria.buildModel();
             }
 
-            if (collidingBacteria(bacteria, bacteriaArray[i])) {
-                var newBacteriaCoordinates = calculateBacteriaCoordinates();
-                bacteria = { x: newBacteriaCoordinates[0], y: newBacteriaCoordinates[1], r: 0.07 }
-                calculatingNewCoordinates--;
-                i = -1;
-            }
+            return bacteria;
         }
-
-        return {...bacteria, id: id, dead: false, consuming: consumingBacteriaArray }
     }
 
     // Creates explosion at the bacteria just killed
@@ -373,7 +392,7 @@ function bacteriaBasher() {
             }
             draw() {
                 ptx.save();
-                ptx.fillStyle = `rgb(${this.color[0]*255}, ${this.color[1]*255}, ${this.color[2]*255})`;
+                ptx.fillStyle = `rgb(${this.color[0] * 255}, ${this.color[1] * 255}, ${this.color[2] * 255})`;
 
                 // Begin arc path
                 ptx.beginPath();
@@ -496,8 +515,8 @@ function bacteriaBasher() {
 
     var ball = new Sphere(gle, 5);
 
-    init_view();
-    init_projection();
+    setCamera();
+    setProjection();
 
     var gl2 = gle.gl;
 
@@ -511,6 +530,16 @@ function bacteriaBasher() {
     gl2.uniform3fv(gle.uniforms.light_colour, light_colour);
 
     ball.draw(program);
+
+    var i = 0;
+    while (i < 100) {
+        bacteriaArray.push(createBacteria(100, bacteriaIdProvider, gle))
+        i++;
+    }
+
+    bacteriaArray.forEach(function(bacteria) {
+        bacteria.draw();
+    }, this);
 
 }
 
@@ -549,9 +578,8 @@ function checkForWin() {
     }
 }
 
-/** Initializes the view matrix.
- */
-init_view = function() {
+// Sets the view matrix
+const setCamera = () => {
     var look_from = [0.0, 2.0, 3.0];
     var look_at = [0.0, 0.0, 0.0];
     var up = [0.0, 1.0, 0.0];
@@ -560,10 +588,9 @@ init_view = function() {
     mat4.lookAt(this.viewMatrix, look_from, look_at, up);
 }
 
-/** Initializes the projection matrix.
- */
-init_projection = function() {
-    var fov = glMatrix.toRadian(60);
+// Sets the projection matrix
+const setProjection = () => {
+    var fov = radian(120);
     var width = 400;
     var height = 400;
     var aspect = width / height;
@@ -572,4 +599,18 @@ init_projection = function() {
 
     this.projectionMatrix = mat4.create();
     mat4.perspective(this.projectionMatrix, fov, aspect, near, far);
+}
+
+const bacteriaIdProvider = (bacteriaIdArray) => {
+    var bucket = Array.from(bacteriaIdArray);
+    var id = bucket[Math.floor(Math.random() * bucket.length)];
+
+    bacteriaIdArray.delete(id);
+    return id;
+}
+
+// Converts degrees to radians
+function radian(degree) {
+    var rad = degree * (Math.PI / 360);
+    return rad;
 }

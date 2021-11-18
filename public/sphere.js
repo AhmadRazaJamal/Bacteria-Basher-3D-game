@@ -282,7 +282,7 @@ Sphere.prototype._subdivide = function(depth) {
 Sphere.prototype.draw = function() {
     var gle = this.gle;
     var gl = gle.gl;
-    console.log(gle.uniforms.light_ambient)
+
     gl.uniform1f(gle.uniforms.light_ambient, this.colour_ambient);
     gl.uniform1f(gle.uniforms.light_diffuse, this.colour_diffuse);
     gl.uniform1f(gle.uniforms.light_specular, this.colour_specular);
