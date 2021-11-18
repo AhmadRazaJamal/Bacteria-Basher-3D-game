@@ -99,7 +99,6 @@ function bacteriaBasher() {
 
         "one_colour",
         "single_colour",
-        "use_texture",
 
         "light_point",
         "light_colour",
@@ -109,8 +108,6 @@ function bacteriaBasher() {
         "light_specular",
 
         "tex_coord",
-
-        "fs_texture_sampler"
     ];
 
     var attributes = [

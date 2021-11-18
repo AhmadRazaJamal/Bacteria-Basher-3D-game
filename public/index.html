@@ -28,7 +28,6 @@
       uniform mat4 vs_projectionMatrix;
       
       uniform float vs_one_colour;
-      uniform float vs_use_texture;
       
       uniform vec4 vs_single_colour;
       
@@ -48,7 +47,6 @@
       
       varying vec4 fs_colour;
       varying float fs_one_colour;
-      varying float fs_use_texture;
       varying vec4 fs_single_colour;
       
       varying vec3 fs_normal;
@@ -74,7 +72,6 @@
                       
         fs_colour = vs_colour;
         fs_one_colour = vs_one_colour;
-        fs_use_texture = vs_use_texture;
         fs_single_colour = vs_single_colour;
         
         fs_normal = normalize(vec3(vs_viewMatrix * vs_modelMatrix * vec4(vs_normal, 0.0)));  
@@ -101,7 +98,6 @@
       varying vec4 fs_colour;
       
       varying float fs_one_colour;
-      varying float fs_use_texture;
       
       varying vec4 fs_single_colour;
       
@@ -118,7 +114,6 @@
       
       varying vec3 fs_view_point;
       
-      uniform sampler2D fs_texture_sampler;
       
       void main() {
       
@@ -126,9 +121,7 @@
         vec3 light_delta = fs_light_point - fs_point.xyz;
         vec3 light_direction = normalize(light_delta);
       
-        if (fs_use_texture > 0.5) {
-          gl_FragColor = texture2D(fs_texture_sampler, fs_tex_coord);
-        } else if (fs_one_colour > 0.5) {
+        if (fs_one_colour > 0.5) {
           gl_FragColor = fs_single_colour;
         } else {
           float cosAngle = clamp(dot(light_direction, fs_normal), 0.0, 1.0);
