@@ -13,9 +13,10 @@
       colourDiffuse: The light scattering coefficient.
       colourSpecular: The light reflection coefficient.
 */
-function Sphere(gle, depth, centre, radius, colourStart, colourStop,
+function Sphere(gle, gl, depth, centre, radius, colourStart, colourStop,
     colourAmbient, colourDiffuse, colourSpecular) {
     this.gle = gle;
+    this.gl = gl;
     this.buffers = {};
     this.model = mat4.create();
     this.translation = centre || vec3.create();
@@ -47,11 +48,6 @@ function Sphere(gle, depth, centre, radius, colourStart, colourStop,
 
     this._createColourBuffer();
     this._createNormalBuffer();
-
-    this._loadPointBuffer();
-    this._loadColourBuffer();
-    this._loadIndexBuffer();
-    this._loadNormalBuffer();
 }
 
 /** Reconstructs the model matrix after a tranformation.
@@ -67,8 +63,9 @@ Sphere.prototype.buildModel = function() {
 /** Creates the point buffer.
  */
 Sphere.prototype._createPointBuffer = function() {
-    var gle = this.gle;
-    var gl = gle.gl;
+
+    var gl = this.gl;
+    console.log(gl)
     var gl_buffer = gl.createBuffer();
 
     var buffer = [
@@ -87,8 +84,8 @@ Sphere.prototype._createPointBuffer = function() {
 /** Loads the point buffer into the openGL environment.
  */
 Sphere.prototype._loadPointBuffer = function() {
-    var gle = this.gle;
-    var gl = gle.gl;
+
+    var gl = this.gl;
 
     gl.bindBuffer(gl.ARRAY_BUFFER, this.buffers.points.gl_buffer);
     gl.bufferData(gl.ARRAY_BUFFER, gl_vector_list(this.buffers.points.buffer),
@@ -98,8 +95,8 @@ Sphere.prototype._loadPointBuffer = function() {
 /** Creates the colour buffer.
  */
 Sphere.prototype._createColourBuffer = function() {
-    var gle = this.gle;
-    var gl = gle.gl;
+
+    var gl = this.gl;
     var gl_buffer = gl.createBuffer();
 
     var colour_norm = vec4.fromValues(0.0, 0.0, 1.0, 0.0);
@@ -142,8 +139,8 @@ Sphere.prototype._createColourBuffer = function() {
 /** Loads the colour buffer into the openGL environment.
  */
 Sphere.prototype._loadColourBuffer = function() {
-    var gle = this.gle;
-    var gl = gle.gl;
+
+    var gl = this.gl;
 
     gl.bindBuffer(gl.ARRAY_BUFFER, this.buffers.colours.gl_buffer);
     gl.bufferData(gl.ARRAY_BUFFER, gl_vector_list(this.buffers.colours.buffer),
@@ -153,8 +150,8 @@ Sphere.prototype._loadColourBuffer = function() {
 /** Creates the index buffer.
  */
 Sphere.prototype._createIndexBuffer = function(depth) {
-    var gle = this.gle;
-    var gl = gle.gl;
+
+    var gl = this.gl;
     var gl_buffer = gl.createBuffer();
 
     var buffer = [];
@@ -170,22 +167,11 @@ Sphere.prototype._createIndexBuffer = function(depth) {
     }
 }
 
-/** Loads the index buffer into the openGL environment.
- */
-Sphere.prototype._loadIndexBuffer = function() {
-    var gle = this.gle;
-    var gl = gle.gl;
-
-    gl.bindBuffer(gl.ELEMENT_ARRAY_BUFFER, this.buffers.indices.gl_buffer);
-    gl.bufferData(gl.ELEMENT_ARRAY_BUFFER,
-        new Uint16Array(this.buffers.indices.buffer), gl.STATIC_DRAW);
-}
-
 /** Creates the normal buffer.
  */
 Sphere.prototype._createNormalBuffer = function() {
-    var gle = this.gle;
-    var gl = gle.gl;
+
+    var gl = this.gl;
 
     var gl_buffer = gl.createBuffer();
     var buffer = [];
@@ -198,17 +184,6 @@ Sphere.prototype._createNormalBuffer = function() {
         gl_buffer: gl_buffer,
         buffer: buffer
     };
-}
-
-/** Loads the normal buffer into the openGL environment.
- */
-Sphere.prototype._loadNormalBuffer = function() {
-    var gle = this.gle;
-    var gl = gle.gl;
-
-    gl.bindBuffer(gl.ARRAY_BUFFER, this.buffers.normals.gl_buffer);
-    gl.bufferData(gl.ARRAY_BUFFER, gl_vector3_list(this.buffers.normals.buffer),
-        gl.STATIC_DRAW);
 }
 
 /** Subdivides the points buffer and indicies buffer
@@ -279,9 +254,9 @@ Sphere.prototype._subdivide = function(depth) {
 
 /** Draws the shape to the openGL environment.
  */
-Sphere.prototype.draw = function() {
-    var gle = this.gle;
-    var gl = gle.gl;
+Sphere.prototype.draw = function(gl, program) {
+
+    // var gl = this.gl;
 
     gl.uniform1f(gle.uniforms.light_ambient, this.colour_ambient);
     gl.uniform1f(gle.uniforms.light_diffuse, this.colour_diffuse);
@@ -292,16 +267,31 @@ Sphere.prototype.draw = function() {
     gl.uniformMatrix4fv(gle.uniforms.modelMatrix, false,
         new Float32Array(this.model));
 
-    gl.bindBuffer(gl.ARRAY_BUFFER, this.buffers.points.gl_buffer);
-    gl.vertexAttribPointer(gle.attributes.point, 4, gl.FLOAT, false, 0, 0);
+    // gl.bindBuffer(gl.ARRAY_BUFFER, this.buffers.points.gl_buffer);
+    // gl.vertexAttribPointer(gle.attributes.point, 4, gl.FLOAT, false, 0, 0);
+    attributeSet(gl, program, "vs_point", 4, gl_vector_list(this.buffers.points.buffer))
+        // gl.bindBuffer(gl.ARRAY_BUFFER, this.buffers.colours.gl_buffer);
+        // gl.vertexAttribPointer(gle.attributes.colour, 4, gl.FLOAT, false, 0, 0);
 
-    gl.bindBuffer(gl.ARRAY_BUFFER, this.buffers.colours.gl_buffer);
-    gl.vertexAttribPointer(gle.attributes.colour, 4, gl.FLOAT, false, 0, 0);
-
-    gl.bindBuffer(gl.ARRAY_BUFFER, this.buffers.normals.gl_buffer);
-    gl.vertexAttribPointer(gle.attributes.normal, 3, gl.FLOAT, false, 0, 0);
+    attributeSet(gl, program, "vs_colour", 4, gl_vector_list(this.buffers.colours.buffer))
+        // gl.bindBuffer(gl.ARRAY_BUFFER, this.buffers.normals.gl_buffer);
+        // gl.vertexAttribPointer(gle.attributes.normal, 3, gl.FLOAT, false, 0, 0);
+    console.log(this.buffers.indices.buffer.length)
+    attributeSet(gl, program, "vs_normal", 3, gl_vector3_list(this.buffers.normals.buffer))
 
     gl.bindBuffer(gl.ELEMENT_ARRAY_BUFFER, this.buffers.indices.gl_buffer);
-    gl.drawElements(gl.TRIANGLES, this.buffers.indices.buffer.length,
-        gl.UNSIGNED_SHORT, 0);
+    gl.bufferData(gl.ELEMENT_ARRAY_BUFFER,
+        new Uint16Array(this.buffers.indices.buffer), gl.STATIC_DRAW);
+
+    console.log(gl.getAttribLocation(program, "vs_point"));
+    gl.drawElements(gl.TRIANGLES, this.buffers.indices.buffer.length, gl.UNSIGNED_SHORT, 0);
+}
+
+// Create and bind Buffer, load buffer data and link vertex attributes with buffer 
+function attributeSet(gl, prog, attr_name, rsize, bufferData) {
+    gl.bindBuffer(gl.ARRAY_BUFFER, gl.createBuffer());
+    gl.bufferData(gl.ARRAY_BUFFER, bufferData,
+        gl.STATIC_DRAW);
+    // console.log(attr_name)
+    gl.vertexAttribPointer(gl.getAttribLocation(prog, attr_name), rsize, gl.FLOAT, false, 0, 0);
 }

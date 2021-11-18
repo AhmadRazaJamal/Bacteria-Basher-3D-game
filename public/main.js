@@ -92,7 +92,52 @@ function bacteriaBasher() {
         return;
     }
 
+    var uniforms = [
+        "modelMatrix",
+        "viewMatrix",
+        "projectionMatrix",
+
+        "one_colour",
+        "single_colour",
+        "use_texture",
+
+        "light_point",
+        "light_colour",
+
+        "light_ambient",
+        "light_diffuse",
+        "light_specular",
+
+        "tex_coord",
+
+        "fs_texture_sampler"
+    ];
+
+    var attributes = [
+        "point",
+        "colour",
+
+        "normal",
+        "tex_coord"
+    ];
+
     gl.useProgram(program)
+
+    uniforms.forEach(function(uniform) {
+        if (uniform.substring(0, 3) == "vs_" ||
+            uniform.substring(0, 3) == "fs_") {
+            uniforms[uniform] = gl.getUniformLocation(program, uniform);
+        } else {
+            uniforms[uniform] = gl.getUniformLocation(program, "vs_" + uniform);
+        }
+    }, this);
+
+
+    attributes.forEach(function(attribute) {
+        var attribute_name = "vs_" + attribute;
+        attributes[attribute] = gl.getAttribLocation(program, attribute_name);
+        gl.enableVertexAttribArray(attributes[attribute]);
+    }, this);
 
     // Create and bind Buffer, load buffer data and link vertex attributes with buffer 
     function attributeSet(gl, prog, attr_name, rsize, arr) {
@@ -176,10 +221,10 @@ function bacteriaBasher() {
             }
         }
 
-        attributeSet(gl, program, "vertPosition", 3, vertices);
-        attributeSet(gl, program, "vertColor", 3, color);
+        // // attributeSet(gl, program, "vertPosition", 3, vertices);
+        // // attributeSet(gl, program, "vertColor", 3, color);
 
-        gl.drawArrays(gl.TRIANGLES, 0, 360 * 3);
+        // gl.drawArrays(gl.TRIANGLES, 0, 360 * 3);
 
     }
 
@@ -513,33 +558,33 @@ function bacteriaBasher() {
 
     gl.disableVertexAttribArray(gle.attributes.tex_coord);
 
-    var ball = new Sphere(gle, 5);
+    var ball = new Sphere(gle, gl, 5);
 
     setCamera();
     setProjection();
 
-    var gl2 = gle.gl;
+    // var gl2 = gle.gl;
 
-    gl2.clear(gl2.COLOR_BUFFER_BIT | gl2.DEPTH_BUFFER_BIT);
+    gl.clear(gl.COLOR_BUFFER_BIT | gl.DEPTH_BUFFER_BIT);
 
-    gl2.uniformMatrix4fv(gle.uniforms.viewMatrix, false, viewMatrix);
-    gl2.uniformMatrix4fv(gle.uniforms.projectionMatrix, false,
+    gl.uniformMatrix4fv(gle.uniforms.viewMatrix, false, viewMatrix);
+    gl.uniformMatrix4fv(gle.uniforms.projectionMatrix, false,
         projectionMatrix);
 
-    gl2.uniform3fv(gle.uniforms.light_point, light_point);
-    gl2.uniform3fv(gle.uniforms.light_colour, light_colour);
+    gl.uniform3fv(gle.uniforms.light_point, light_point);
+    gl.uniform3fv(gle.uniforms.light_colour, light_colour);
 
-    ball.draw(program);
+    ball.draw(gl, program);
 
-    var i = 0;
-    while (i < 100) {
-        bacteriaArray.push(createBacteria(100, bacteriaIdProvider, gle))
-        i++;
-    }
+    // var i = 0;
+    // while (i < 100) {
+    //     bacteriaArray.push(createBacteria(100, bacteriaIdProvider, gle))
+    //     i++;
+    // }
 
-    bacteriaArray.forEach(function(bacteria) {
-        bacteria.draw();
-    }, this);
+    // bacteriaArray.forEach(function(bacteria) {
+    //     bacteria.draw();
+    // }, this);
 
 }
 
