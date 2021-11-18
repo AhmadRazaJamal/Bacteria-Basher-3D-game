@@ -395,6 +395,7 @@ function bacteriaBasher() {
             var id = ids(bacteriaIdArray);
             var bacteria = new Sphere(
                 gle,
+                gl,
                 5,
                 r,
                 radius,
@@ -576,15 +577,15 @@ function bacteriaBasher() {
 
     ball.draw(gl, program);
 
-    // var i = 0;
-    // while (i < 100) {
-    //     bacteriaArray.push(createBacteria(100, bacteriaIdProvider, gle))
-    //     i++;
-    // }
+    var i = 0;
+    while (i < 100) {
+        bacteriaArray.push(createBacteria(100, bacteriaIdProvider, gle))
+        i++;
+    }
 
-    // bacteriaArray.forEach(function(bacteria) {
-    //     bacteria.draw();
-    // }, this);
+    bacteriaArray.forEach(function(bacteria) {
+        bacteria.draw(gl, program);
+    }, this);
 
 }
 
