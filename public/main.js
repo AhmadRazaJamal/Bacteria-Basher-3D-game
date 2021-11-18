@@ -62,43 +62,11 @@ function bacteriaBasher() {
     // Centered the circle at the center of the canvas
     gl.viewport(0, 0, canvas.width, canvas.height);
 
-    /*  
-    CREATE, COMPILE, AND LINK SHADERS
-    */
-    var vertexShader = gl.createShader(gl.VERTEX_SHADER);
-    var fragmentShader = gl.createShader(gl.FRAGMENT_SHADER);
-
-    gl.shaderSource(vertexShader, document.getElementById("vertex_shader").innerHTML);
-    gl.shaderSource(fragmentShader, document.getElementById("fragment_shader").innerHTML);
-
-    gl.compileShader(vertexShader);
-    if (!gl.getShaderParameter(vertexShader, gl.COMPILE_STATUS)) {
-        console.error('Error compiling vertex shader!', gl.getShaderInfoLog(vertexShader))
-        return;
-    }
-    gl.compileShader(fragmentShader);
-    if (!gl.getShaderParameter(fragmentShader, gl.COMPILE_STATUS)) {
-        console.error('Error compiling vertex shader!', gl.getShaderInfoLog(fragmentShader))
-        return;
-    }
-
-    var program = gl.createProgram();
-    gl.attachShader(program, vertexShader);
-    gl.attachShader(program, fragmentShader);
-
-    gl.linkProgram(program);
-    if (!gl.getProgramParameter(program, gl.LINK_STATUS)) {
-        console.error('Error linking program!', gl.getProgramInfo(program));
-        return;
-    }
-
+    // Set up WebGL, vertexShader, fragmentShader and shader program
     var uniforms = [
         "modelMatrix",
         "viewMatrix",
         "projectionMatrix",
-
-        "one_colour",
-        "single_colour",
 
         "light_point",
         "light_colour",
@@ -106,45 +74,25 @@ function bacteriaBasher() {
         "light_ambient",
         "light_diffuse",
         "light_specular",
-
-        "tex_coord",
     ];
 
     var attributes = [
         "point",
         "colour",
-
         "normal",
-        "tex_coord"
     ];
 
-    gl.useProgram(program)
+    var light_point = vec3.fromValues(2.0, 2.0, 2.0);
+    var light_colour = vec3.fromValues(1.0, 1.0, 1.0);
 
-    uniforms.forEach(function(uniform) {
-        if (uniform.substring(0, 3) == "vs_" ||
-            uniform.substring(0, 3) == "fs_") {
-            uniforms[uniform] = gl.getUniformLocation(program, uniform);
-        } else {
-            uniforms[uniform] = gl.getUniformLocation(program, "vs_" + uniform);
-        }
-    }, this);
+    var vs_source = document.getElementById("vertex_shader").innerHTML;
+    var fs_source = document.getElementById("fragment_shader").innerHTML;
 
+    const gle = new GLEnvironment(gl,
+        vs_source, fs_source,
+        uniforms, attributes);
 
-    attributes.forEach(function(attribute) {
-        var attribute_name = "vs_" + attribute;
-        attributes[attribute] = gl.getAttribLocation(program, attribute_name);
-        gl.enableVertexAttribArray(attributes[attribute]);
-    }, this);
-
-    // Create and bind Buffer, load buffer data and link vertex attributes with buffer 
-    function attributeSet(gl, prog, attr_name, rsize, arr) {
-        gl.bindBuffer(gl.ARRAY_BUFFER, gl.createBuffer());
-        gl.bufferData(gl.ARRAY_BUFFER, new Float32Array(arr),
-            gl.STATIC_DRAW);
-        var attr = gl.getAttribLocation(prog, attr_name);
-        gl.enableVertexAttribArray(attr);
-        gl.vertexAttribPointer(attr, rsize, gl.FLOAT, false, 0, 0);
-    }
+    gl.useProgram(gle.shader);
 
     /*  
      DRAWING
@@ -511,51 +459,6 @@ function bacteriaBasher() {
     // }
     // requestAnimationFrame(startGame);
 
-    var light_point = vec3.fromValues(2.0, 2.0, 2.0);
-    var light_colour = vec3.fromValues(1.0, 1.0, 1.0);
-
-    var vs_source = document.getElementById("vertex_shader").innerHTML;
-    var fs_source = document.getElementById("fragment_shader").innerHTML;
-
-    var uniforms = [
-        "modelMatrix",
-        "viewMatrix",
-        "projectionMatrix",
-
-        "one_colour",
-        "single_colour",
-        "use_texture",
-
-        "light_point",
-        "light_colour",
-
-        "light_ambient",
-        "light_diffuse",
-        "light_specular",
-
-        "tex_coord",
-
-        "fs_texture_sampler"
-    ];
-
-    var attributes = [
-        "point",
-        "colour",
-
-        "normal",
-        "tex_coord"
-    ];
-
-    const gle = new GLEnvironment(gl,
-        vs_source, fs_source,
-        uniforms, attributes);
-
-    gl.useProgram(gle.shader);
-    // gl.uniform1f(this.gle.uniforms.one_colour, 0.0);
-    // gl.uniform1f(this.gle.uniforms.use_texture, 0.0);
-
-    gl.disableVertexAttribArray(gle.attributes.tex_coord);
-
     var ball = new Sphere(gle, gl, 5);
 
     setCamera();
@@ -572,7 +475,7 @@ function bacteriaBasher() {
     gl.uniform3fv(gle.uniforms.light_point, light_point);
     gl.uniform3fv(gle.uniforms.light_colour, light_colour);
 
-    ball.draw(gl, program);
+    ball.draw(gl, gle.shader);
 
     var i = 0;
     while (i < 100) {
@@ -581,7 +484,7 @@ function bacteriaBasher() {
     }
 
     bacteriaArray.forEach(function(bacteria) {
-        bacteria.draw(gl, program);
+        bacteria.draw(gl, gle.shader);
     }, this);
 
 }

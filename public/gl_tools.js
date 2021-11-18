@@ -31,8 +31,8 @@ GLEnvironment.prototype._setVertexShaderSource = function(source) {
     gl.shaderSource(vertex_shader, source);
     gl.compileShader(vertex_shader);
     if (!gl.getShaderParameter(vertex_shader, gl.COMPILE_STATUS)) {
-        console.log("Vertex Shader failed to load ...");
-        console.log(gl.getShaderInfoLog(vertex_shader));
+        console.error('Error compiling vertex shader!', gl.getShaderInfoLog(this.vertex_shader))
+        return;
     }
     this.vertex_shader = vertex_shader;
 }
@@ -49,8 +49,8 @@ GLEnvironment.prototype._setFragmentShaderSource = function(source) {
     gl.shaderSource(fragment_shader, source);
     gl.compileShader(fragment_shader);
     if (!gl.getShaderParameter(fragment_shader, gl.COMPILE_STATUS)) {
-        console.log("Fragment Shader failed to load ...");
-        console.log(gl.getShaderInfoLog(fragment_shader));
+        console.error('Error compiling vertex shader!', gl.getShaderInfoLog(fragment_shader))
+        return;
     }
     this.fragment_shader = fragment_shader;
 }
@@ -68,9 +68,10 @@ GLEnvironment.prototype._buildShader = function() {
     gl.linkProgram(shader);
 
     if (!gl.getProgramParameter(shader, gl.LINK_STATUS)) {
-        console.log("Link failure ...");
-        console.log(gl.getProgramInfoLog(shader));
+        console.error('Error linking program!', gl.getProgramInfo(shader));
+        return;
     }
+
     this.shader = shader;
 }
 
