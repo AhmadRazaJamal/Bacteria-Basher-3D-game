@@ -54,10 +54,10 @@ function bacteriaBasher() {
     // Clear the color buffer with specified clear color
     gl.clear(gl.COLOR_BUFFER_BIT);
 
-    canvas.width = window.innerWidth / 1.5;
-    canvas.height = window.innerHeight / 1.5;
-    particleCanvas.width = window.innerWidth / 1.5;
-    particleCanvas.height = window.innerHeight / 1.5;
+    canvas.width = window.innerWidth;
+    canvas.height = window.innerHeight;
+    particleCanvas.width = window.innerWidth;
+    particleCanvas.height = window.innerHeight;
 
     // Centered the circle at the center of the canvas
     gl.viewport(0, 0, canvas.width, canvas.height);
@@ -215,6 +215,7 @@ function bacteriaBasher() {
         y = (400 / 2 - (y - rect.top)) / (400 / 2);
 
         var clickedPoint = { x: x, y: y, r: 0 };
+        console.log(x, y)
 
         // Loop through all bacteria and check if you clicked within the radius of any
         // Increase score and destroy the bacteria
