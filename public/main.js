@@ -242,7 +242,7 @@ function bacteriaBasher() {
 
         ball.draw(gl, gle.shader);
 
-        console.log(bacteriaArray)
+        (bacteriaArray)
         bacteriaArray.forEach(function(bacteria) {
             bacteria.draw(gl, gle.shader);
         }, this);
@@ -259,7 +259,7 @@ function bacteriaBasher() {
         gl.uniform1f(gle.uniforms.one_colour, 1.0);
         gl.clearColor(0.0, 0.0, 0.0, 1.0);
         draw();
-        gl.clearColor([0.0, 0.4, 0.7, 1.0]);
+        gl.clearColor(0.0, 0.4, 0.7, 1.0);
         gl.uniform1f(gle.uniforms.one_colour, 0.0);
     }
 
@@ -274,7 +274,7 @@ function bacteriaBasher() {
         // y = (400 / 2 - (y - rect.top)) / (400 / 2);
 
         // var clickedPoint = { x: x, y: y, r: 0 };
-        // console.log(x, y)
+        // (x, y)
 
         // // Loop through all bacteria and check if you clicked within the radius of any
         // // Increase score and destroy the bacteria
@@ -292,10 +292,14 @@ function bacteriaBasher() {
         //     }
         // }
 
-        console.log(event)
-        var offset = element_offset(event.target);
-        var x = event.clientX - offset.x;
-        var y = event.target.height - (event.clientY - offset.y);
+        var x = event.clientX,
+            y = event.clientY;
+
+        // The height of the canvas is 400
+        const rect = event.target.getBoundingClientRect();
+        x = (x - rect.left);
+        y = (400 - (y - rect.top));
+        console.log(x, y)
 
         var colour = new Uint8Array(4);
         false_draw();
@@ -305,6 +309,7 @@ function bacteriaBasher() {
         var id = colour2id(colour);
 
         var hit = false;
+        draw();
     }
 
     function destroy(bacteria, index) {
@@ -407,7 +412,7 @@ function bacteriaBasher() {
     /** Intialize the bacteria colours.
      */
     const bacteriaColorsInit = () => {
-        console.log(bacteriaIdArray.entries())
+        (bacteriaIdArray.entries())
         var id_iterate = bacteriaIdArray.entries();
 
         for (var i = 0; i < bacteriaIdArray.size; i++) {
@@ -422,12 +427,12 @@ function bacteriaBasher() {
             ]);
         }
         this._bacteriaColors = bacteriaColors;
-        console.log(bacteriaColors)
+        (bacteriaColors)
     }
 
     function createBacteria(maxBacteria, ids, gle) {
-        var radius = 0.06;
-        console.log(bacteriaColors)
+        var radius = 0.2;
+        (bacteriaColors)
         if (bacteriaArray.length < maxBacteria && bacteriaIdArray.size > 0) {
             var r = vec3.fromValues(Math.random() - 0.5, Math.random() - 0.5, Math.random() - 0.5);
             vec3.normalize(r, r);

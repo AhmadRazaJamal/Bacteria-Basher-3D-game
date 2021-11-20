@@ -263,7 +263,7 @@ Sphere.prototype.draw = function(gl, program) {
     gl.bindBuffer(gl.ELEMENT_ARRAY_BUFFER, this.buffers.indices.gl_buffer);
     gl.bufferData(gl.ELEMENT_ARRAY_BUFFER, new Uint16Array(this.buffers.indices.buffer), gl.STATIC_DRAW);
 
-    console.log(gl.getAttribLocation(program, "vs_point"));
+    (gl.getAttribLocation(program, "vs_point"));
     gl.drawElements(gl.TRIANGLES, this.buffers.indices.buffer.length, gl.UNSIGNED_SHORT, 0);
 }
 
@@ -273,4 +273,10 @@ function attributeSet(gl, prog, attr_name, rsize, bufferData) {
     gl.bufferData(gl.ARRAY_BUFFER, bufferData,
         gl.STATIC_DRAW);
     gl.vertexAttribPointer(gl.getAttribLocation(prog, attr_name), rsize, gl.FLOAT, false, 0, 0);
+}
+
+function colour2id(colour) {
+    return (colour[0] << (8 * 0)) |
+        (colour[1] << (8 * 1)) |
+        (colour[2] << (8 * 2));
 }
