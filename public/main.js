@@ -74,20 +74,16 @@ function bacteriaBasher() {
         "light_ambient",
         "light_diffuse",
         "light_specular",
-
-        "one_colour",
-        "single_colour",
-        "use_texture",
-
-        "tex_coord",
     ];
 
     var attributes = [
         "point",
         "colour",
         "normal",
-        "tex_coord"
     ];
+
+    var light_point = vec3.fromValues(2.0, 2.0, 2.0);
+    var light_colour = vec3.fromValues(1.0, 1.0, 1.0);
 
     var vs_source = document.getElementById("vertex_shader").innerHTML;
     var fs_source = document.getElementById("fragment_shader").innerHTML;
@@ -97,11 +93,6 @@ function bacteriaBasher() {
         uniforms, attributes);
 
     gl.useProgram(gle.shader);
-
-    gl.uniform1f(gle.uniforms.one_colour, 0.0);
-    gl.uniform1f(gle.uniforms.use_texture, 0.0);
-
-    gl.disableVertexAttribArray(gle.attributes.tex_coord);
 
     /*  
      DRAWING
@@ -134,18 +125,17 @@ function bacteriaBasher() {
     }
 
     // Initialize Bacteria color array
-    var bacteriaColors = new Map();
+    var bacterColorsArray = [];
+
+    for (i = 0; i < remainingBacteria; i++) {
+        bacterColorsArray.push([Math.random(), Math.random(), Math.random()])
+    }
 
     // Initialize Bacteria ids array 
     var bacteriaIdArray = new Set();
     for (var i = 0; i < remainingBacteria; i++) {
-        bacteriaIdArray.add(i + 2);
+        bacteriaIdArray.add(i + 3);
     }
-
-    var ball = new Sphere(gle, gl, 5);
-
-    setCamera();
-    setProjection();
 
     // Function to draw a circle
     function drawCircle(x, y, r, isBacteria, index) {
@@ -214,6 +204,7 @@ function bacteriaBasher() {
         }
     }
 
+<<<<<<< HEAD
     function element_offset(element) {
         var x = 0;
         var y = 0;
@@ -310,6 +301,36 @@ function bacteriaBasher() {
 
         var hit = false;
         draw();
+=======
+    // Checks if a bacteria is clicked on
+    canvas.onmousedown = function click(e) {
+        var x = e.clientX,
+            y = e.clientY;
+
+        // The height of the canvas is 400
+        const rect = e.target.getBoundingClientRect();
+        x = ((x - rect.left) - 400 / 2) / (400 / 2);
+        y = (400 / 2 - (y - rect.top)) / (400 / 2);
+
+        var clickedPoint = { x: x, y: y, r: 0 };
+        console.log(x, y)
+
+        // Loop through all bacteria and check if you clicked within the radius of any
+        // Increase score and destroy the bacteria
+        for (var i in bacteriaArray) {
+            if (collidingBacteria(clickedPoint, bacteriaArray[i])) {
+                kaboom(bacteriaArray[i]);
+
+                const playerScoreTag = document.getElementById(`player_score`)
+                gameScore += 1;
+                playerScoreTag.innerText = gameScore;
+
+                destroy(bacteriaArray[i], i);
+                hit = true;
+                break;
+            }
+        }
+>>>>>>> parent of 5b38628 (moved code around and simplified bacteria spawning)
     }
 
     function destroy(bacteria, index) {
@@ -409,6 +430,7 @@ function bacteriaBasher() {
         return [x, y];
     }
 
+<<<<<<< HEAD
     /** Intialize the bacteria colours.
      */
     const bacteriaColorsInit = () => {
@@ -434,20 +456,24 @@ function bacteriaBasher() {
         var radius = 0.2;
         (bacteriaColors)
         if (bacteriaArray.length < maxBacteria && bacteriaIdArray.size > 0) {
+=======
+    function createBacteria(maxBacteria, ids, gle) {
+        var radius = 0.06;
+
+        if (bacteriaArray.length < maxBacteria) {
+>>>>>>> parent of 5b38628 (moved code around and simplified bacteria spawning)
             var r = vec3.fromValues(Math.random() - 0.5, Math.random() - 0.5, Math.random() - 0.5);
             vec3.normalize(r, r);
 
             var id = ids(bacteriaIdArray);
-            var colours = bacteriaColors.get(id);
-
             var bacteria = new Sphere(
                 gle,
                 gl,
                 5,
                 r,
                 radius,
-                colours[0],
-                colours[1],
+                bacterColorsArray[Math.floor(Math.random() * bacterColorsArray.length)],
+                bacterColorsArray[Math.floor(Math.random() * bacterColorsArray.length)],
                 0.3);
             bacteria.id = id;
 
@@ -561,14 +587,33 @@ function bacteriaBasher() {
     // }
     // requestAnimationFrame(startGame);
 
-    bacteriaColorsInit();
+    var ball = new Sphere(gle, gl, 5);
 
-    let num = 0;
-    while (num < remainingBacteria) {
-        bacteriaArray.push(createBacteria(30, bacteriaIdProvider, gle));
-        num++;
+    setCamera();
+    setProjection();
+
+    // var gl2 = gle.gl;
+
+    gl.clear(gl.COLOR_BUFFER_BIT | gl.DEPTH_BUFFER_BIT);
+
+    gl.uniformMatrix4fv(gle.uniforms.viewMatrix, false, viewMatrix);
+    gl.uniformMatrix4fv(gle.uniforms.projectionMatrix, false,
+        projectionMatrix);
+
+    gl.uniform3fv(gle.uniforms.light_point, light_point);
+    gl.uniform3fv(gle.uniforms.light_colour, light_colour);
+
+    ball.draw(gl, gle.shader);
+
+    var i = 0;
+    while (i < 100) {
+        bacteriaArray.push(createBacteria(100, bacteriaIdProvider, gle))
+        i++;
     }
-    draw()
+
+    bacteriaArray.forEach(function(bacteria) {
+        bacteria.draw(gl, gle.shader);
+    }, this);
 
 }
 
@@ -642,50 +687,4 @@ const bacteriaIdProvider = (bacteriaIdArray) => {
 function radian(degree) {
     var rad = degree * (Math.PI / 360);
     return rad;
-}
-
-function hsl2rgb(hsl) {
-    var h = hsl[0];
-    var s = hsl[1];
-    var l = hsl[2];
-
-
-    var hp = h / 60;
-    var f = Math.floor(hp);
-    var c = (1 - Math.abs(2 * l - 1)) * s;
-    var x = c * (1 - Math.abs(hp % 2 - 1));
-    var m = l - 0.5 * c;
-
-    var r = m;
-    var g = m;
-    var b = m;
-
-    switch (f) {
-        case 0:
-            r += c;
-            g += x;
-            break;
-        case 1:
-            r += x;
-            g += c;
-            break;
-        case 2:
-            g += c;
-            b += x;
-            break;
-        case 3:
-            g += x;
-            b += c;
-            break;
-        case 4:
-            r += x;
-            b += c;
-            break;
-        case 5:
-            r += c;
-            b += x;
-            break;
-    }
-
-    return [r, g, b];
 }
