@@ -1,72 +1,8 @@
-"use strict";
+// Creates the point buffer.
+Sphere.prototype.initPointsBuffer = function() {
+    const gl = this.glObj.gl;
 
-/** A Sphere object.
-
-    Parameters:
-      gle: The openGL environment to use.
-      depth: The resolution (recommended between 3 and 7).
-      centre: The centre for the sphere.
-      radius: The radius of the sphere.
-      colourStart: The colour for the bottom of the sphere.
-      colourStop: The colour for the top of the sphere.
-      colourAmbient: The glow coefficient.
-      colourDiffuse: The light scattering coefficient.
-      colourSpecular: The light reflection coefficient.
-*/
-function Sphere(gle, gl, depth, centre, radius, colourStart, colourStop,
-    colourAmbient, colourDiffuse, colourSpecular) {
-    this.gle = gle;
-    this.gl = gl;
-    this.buffers = {};
-    this.model = mat4.create();
-    this.translation = centre || vec3.create();
-    this.scale = vec3.fromValues(1.0, 1.0, 1.0);
-    this.rotation = mat4.create();
-    this.id = 0;
-
-    if (depth === undefined) depth = 5;
-
-    if (radius !== undefined) vec3.set(this.scale, radius, radius, radius);
-
-    this.colour_start = colourStart || vec4.fromValues(0.0, 0.5, 0.7, 1.0);
-    this.colour_stop = colourStop || vec4.fromValues(0.4, 0.8, 0.9, 1.0);
-
-    if (colourAmbient === undefined) colourAmbient = 0.3;
-    if (colourDiffuse === undefined) colourDiffuse = 0.5;
-    if (colourSpecular === undefined) colourSpecular = 0.5;
-
-    this.colour_ambient = colourAmbient;
-    this.colour_diffuse = colourDiffuse;
-    this.colour_specular = colourSpecular;
-
-    this.buildModel();
-
-    this._createPointBuffer();
-    this._createIndexBuffer();
-
-    this._subdivide(depth);
-
-    this._createColourBuffer();
-    this._createNormalBuffer();
-}
-
-/** Reconstructs the model matrix after a tranformation.
- */
-Sphere.prototype.buildModel = function() {
-    this.model = mat4.create();
-
-    mat4.translate(this.model, this.model, this.translation);
-    mat4.scale(this.model, this.model, this.scale);
-    mat4.mul(this.model, this.model, this.rotation);
-}
-
-/** Creates the point buffer.
- */
-Sphere.prototype._createPointBuffer = function() {
-    var gl = this.gl;
-    var gl_buffer = gl.createBuffer();
-
-    var buffer = [
+    const pointsbuffer = [
         sphere_vector(0.0, 0.0),
         sphere_vector(0.0, Math.acos(-1.0 / 3.0)),
         sphere_vector(2.0 * Math.PI / 3.0, Math.acos(-1.0 / 3.0)),
@@ -74,209 +10,231 @@ Sphere.prototype._createPointBuffer = function() {
     ];
 
     this.buffers.points = {
-        gl_buffer: gl_buffer,
-        buffer: buffer
-    }
-}
-
-/** Loads the point buffer into the openGL environment.
- */
-Sphere.prototype._loadPointBuffer = function() {
-    var gl = this.gl;
-
-    gl.bindBuffer(gl.ARRAY_BUFFER, this.buffers.points.gl_buffer);
-    gl.bufferData(gl.ARRAY_BUFFER, gl_vector_list(this.buffers.points.buffer),
-        gl.STATIC_DRAW);
-}
-
-/** Creates the colour buffer.
- */
-Sphere.prototype._createColourBuffer = function() {
-    var gl = this.gl;
-    var gl_buffer = gl.createBuffer();
-
-    var colour_norm = vec4.fromValues(0.0, 0.0, 1.0, 0.0);
-
-    var colour_difference = vec4.sub(vec4.create(),
-        this.colour_stop, this.colour_start);
-
-    var colour_matrix = mat4.create();
-    for (var i = 0; i < 3; i++) {
-        colour_matrix[0 + i * 4] = colour_difference[0] * colour_norm[i];
-        colour_matrix[1 + i * 4] = colour_difference[1] * colour_norm[i];
-        colour_matrix[2 + i * 4] = colour_difference[2] * colour_norm[i];
+        glBuffer: gl.createBuffer(),
+        buffer: pointsbuffer
     }
 
-    colour_matrix[12] = this.colour_start[0];
-    colour_matrix[13] = this.colour_start[1];
-    colour_matrix[14] = this.colour_start[2];
-
-    var m = mat4.create()
-
-    mat4.scale(m, m, [0.5, 0.5, 0.5]);
-    mat4.translate(m, m, [1.0, 1.0, 1.0]);
-    mat4.mul(colour_matrix, colour_matrix, m);
-
-    var buffer = [];
-
-    this.buffers.points.buffer.forEach(function(point) {
-        var colour = vec4.create();
-        vec4.transformMat4(colour, point, colour_matrix);
-
-        buffer.push(colour);
-    }, this);
-
-    this.buffers.colours = {
-        gl_buffer: gl_buffer,
-        buffer: buffer
-    }
-}
-
-/** Loads the colour buffer into the openGL environment.
- */
-Sphere.prototype._loadColourBuffer = function() {
-    var gl = this.gl;
-
-    gl.bindBuffer(gl.ARRAY_BUFFER, this.buffers.colours.gl_buffer);
-    gl.bufferData(gl.ARRAY_BUFFER, gl_vector_list(this.buffers.colours.buffer),
-        gl.STATIC_DRAW);
-}
-
-/** Creates the index buffer.
- */
-Sphere.prototype._createIndexBuffer = function(depth) {
-    var gl = this.gl;
-    var gl_buffer = gl.createBuffer();
-
-    var buffer = [];
-
-    buffer.push(0, 2, 1);
-    buffer.push(0, 1, 3);
-    buffer.push(0, 3, 2);
-    buffer.push(1, 2, 3);
+    const indexbuffer = [
+        0, 2, 1,
+        0, 1, 3,
+        0, 3, 2,
+        1, 2, 3
+    ];
 
     this.buffers.indices = {
-        gl_buffer: gl_buffer,
+        glBuffer: gl.createBuffer(),
+        buffer: indexbuffer
+    }
+}
+
+
+// Creates the index buffer
+Sphere.prototype.initIndexBuffer = function() {
+    const gl = this.glObj.gl;
+
+    const buffer = [
+        0, 2, 1,
+        0, 1, 3,
+        0, 3, 2,
+        1, 2, 3
+    ];
+
+    this.buffers.indices = {
+        glBuffer: gl.createBuffer(),
         buffer: buffer
     }
 }
 
-/** Creates the normal buffer.
- */
-Sphere.prototype._createNormalBuffer = function() {
-    var gl = this.gl;
+// Creates a color buffer
+Sphere.prototype.initcolorBuffer = function() {
+    const gl = this.glObj.gl;
 
-    var gl_buffer = gl.createBuffer();
-    var buffer = [];
+    const colorMatrix = mat4.create();
+    const colorNormal = vec4.fromValues(0.0, 0.0, 1.0, 0.0);
+
+    // Applies the client specified color to the sphere
+    const colorDiff = vec4.sub(vec4.create(), this.gradientColorStop, this.gradientColorStart);
+
+    for (let i = 0; i < 3; i++) {
+        colorMatrix[0 + i * 4] = colorDiff[0] * colorNormal[i];
+        colorMatrix[1 + i * 4] = colorDiff[1] * colorNormal[i];
+        colorMatrix[2 + i * 4] = colorDiff[2] * colorNormal[i];
+    }
+
+    colorMatrix[12] = this.gradientColorStart[0];
+    colorMatrix[13] = this.gradientColorStart[1];
+    colorMatrix[14] = this.gradientColorStart[2];
+
+    const tempBuffer = [];
 
     this.buffers.points.buffer.forEach(function(point) {
-        buffer.push(vec3.clone(point));
+        const color = vec4.create();
+        vec4.transformMat4(color, point, colorMatrix);
+
+        tempBuffer.push(color);
+    }, this);
+
+    this.buffers.colors = {
+        glBuffer: gl.createBuffer(),
+        buffer: tempBuffer
+    }
+}
+
+// Creates the normal buffer.
+Sphere.prototype.initNormalBuffer = function() {
+    const gl = this.glObj.gl;
+
+    const tempBuffer = [];
+    this.buffers.points.buffer.forEach(function(point) {
+        tempBuffer.push(vec3.clone(point));
     }, this);
 
     this.buffers.normals = {
-        gl_buffer: gl_buffer,
-        buffer: buffer
+        glBuffer: gl.createBuffer(),
+        buffer: tempBuffer
     };
 }
 
-/** Subdivides the points buffer and indicies buffer
-    to create more triangles (makes the shape smoother).
 
-    Parameters:
-      depth: The number of times to subdivide.
-*/
-Sphere.prototype._subdivide = function(depth) {
-    if (depth == 0) return;
+const getNewIndices = (p1, p2, points, new_points) => {
+    const vec = vec4.create()
+    vec[3] = 1.0;
+    vec3.lerp(vec, points[p1], points[p2], 0.5);
+    vec3.normalize(vec, vec);
 
-    var points = this.buffers.points.buffer;
-    var indices = this.buffers.indices.buffer;
+    const index = points.length;
 
-    var new_points = new Map();
+    points.push(vec);
 
-    /** Finds the existing vertex or creates it.
-
-        Parameters:
-          a: One end index.
-          b: The other end index.
-
-        Returns:
-          The index of the appropriate point.
-    */
-    function get_index(a, b) {
-        if (new_points.has([a, b])) {
-            return new_points.get([a, b]);
-        } else {
-            var vec = vec4.create()
-            vec[3] = 1.0;
-            vec3.lerp(vec, points[a], points[b], 0.5);
-            vec3.normalize(vec, vec);
-
-            var index = points.length;
-
-            points.push(vec);
-
-            new_points.set([a, b], index);
-            new_points.set([b, a], index);
-            return index;
-        }
-    }
-
-    var new_indices = [];
-
-    for (var i = 0; i < indices.length; i += 3) {
-
-        var a = indices[i + 0];
-        var b = indices[i + 1];
-        var c = indices[i + 2];
-
-        var ab = get_index(a, b);
-        var bc = get_index(b, c);
-        var ca = get_index(c, a);
-
-        new_indices.push(a, ab, ca);
-        new_indices.push(b, bc, ab);
-        new_indices.push(c, ca, bc);
-        new_indices.push(ab, bc, ca);
-
-    }
-
-    this.buffers.indices.buffer = new_indices;
-
-    this._subdivide(depth - 1);
+    new_points.set([p1, p2], index);
+    new_points.set([p2, p1], index);
+    return index;
 }
 
 /** Draws the shape to the openGL environment.
  */
-Sphere.prototype.draw = function(gl, program) {
-    var gle = this.gle;
+Sphere.prototype.draw = function() {
+    const gl = this.glObj.gl;
 
-    gl.uniform1f(gle.uniforms.light_ambient, this.colour_ambient);
-    gl.uniform1f(gle.uniforms.light_diffuse, this.colour_diffuse);
-    gl.uniform1f(gle.uniforms.light_specular, this.colour_specular);
+    gl.uniformMatrix4fv(glObj.uniforms.modelMatrix, false, new Float32Array(this.model));
 
-    gl.uniformMatrix4fv(gle.uniforms.modelMatrix, false, new Float32Array(this.model));
+    gl.bindBuffer(gl.ARRAY_BUFFER, this.buffers.points.glBuffer);
+    gl.vertexAttribPointer(glObj.attributes.point, 4, gl.FLOAT, false, 0, 0);
 
-    attributeSet(gl, program, "vs_point", 4, gl_vector_list(this.buffers.points.buffer))
-    attributeSet(gl, program, "vs_colour", 4, gl_vector_list(this.buffers.colours.buffer))
-    attributeSet(gl, program, "vs_normal", 3, gl_vector3_list(this.buffers.normals.buffer))
+    gl.bindBuffer(gl.ARRAY_BUFFER, this.buffers.colors.glBuffer);
+    gl.vertexAttribPointer(glObj.attributes.color, 4, gl.FLOAT, false, 0, 0);
 
-    gl.bindBuffer(gl.ELEMENT_ARRAY_BUFFER, this.buffers.indices.gl_buffer);
-    gl.bufferData(gl.ELEMENT_ARRAY_BUFFER, new Uint16Array(this.buffers.indices.buffer), gl.STATIC_DRAW);
+    gl.bindBuffer(gl.ARRAY_BUFFER, this.buffers.normals.glBuffer);
+    gl.vertexAttribPointer(glObj.attributes.normal, 3, gl.FLOAT, false, 0, 0);
 
-    (gl.getAttribLocation(program, "vs_point"));
-    gl.drawElements(gl.TRIANGLES, this.buffers.indices.buffer.length, gl.UNSIGNED_SHORT, 0);
+    gl.bindBuffer(gl.ELEMENT_ARRAY_BUFFER, this.buffers.indices.glBuffer);
+    gl.drawElements(gl.TRIANGLES, this.buffers.indices.buffer.length,
+        gl.UNSIGNED_SHORT, 0);
 }
 
-// Create and bind Buffer, load buffer data and link vertex attributes with buffer 
-function attributeSet(gl, prog, attr_name, rsize, bufferData) {
-    gl.bindBuffer(gl.ARRAY_BUFFER, gl.createBuffer());
-    gl.bufferData(gl.ARRAY_BUFFER, bufferData,
-        gl.STATIC_DRAW);
-    gl.vertexAttribPointer(gl.getAttribLocation(prog, attr_name), rsize, gl.FLOAT, false, 0, 0);
+//Reconstructs the model matrix after a tranformation.
+Sphere.prototype.reconstructModelMatrix = function() {
+    this.model = mat4.create();
+
+    mat4.translate(this.model, this.model, this.translationMatrix);
+    mat4.scale(this.model, this.model, this.scalingMatrix);
+    mat4.mul(this.model, this.model, this.rotationMatrix);
 }
 
-function colour2id(colour) {
-    return (colour[0] << (8 * 0)) |
-        (colour[1] << (8 * 1)) |
-        (colour[2] << (8 * 2));
+function Sphere(glObj, resolution, centre, radius, colorStart, colorStop) {
+    this.glObj = glObj;
+    this.buffers = {};
+    this.model = mat4.create();
+
+    this.translationMatrix = centre || vec3.create();
+    this.scalingMatrix = vec3.fromValues(1.0, 1.0, 1.0);
+    this.rotationMatrix = mat4.create();
+
+    if (radius) vec3.set(this.scalingMatrix, radius, radius, radius);
+
+    this.gradientColorStart = colorStart || vec4.fromValues(0.8, 0.3, 1, 1.0);
+    this.gradientColorStop = colorStop || vec4.fromValues(0.8, 0.3, 1, 1.0);
+
+    this.reconstructModelMatrix();
+
+    this.initPointsBuffer();
+    subdivide(resolution, this.buffers);
+
+    this.initcolorBuffer();
+    this.initNormalBuffer();
+
+    loadBufferData(glObj.gl, convert2gl_vec_list(this.buffers.points.buffer), this.buffers.points.glBuffer);
+    loadBufferData(glObj.gl, convert2gl_vec_list(this.buffers.colors.buffer), this.buffers.colors.glBuffer);
+    loadBufferData(glObj.gl, convert2gl_vec3_list(this.buffers.normals.buffer), this.buffers.normals.glBuffer);
+    loadBufferData(glObj.gl, new Uint16Array(this.buffers.indices.buffer), this.buffers.indices.glBuffer, true);
+}
+
+/* 
+HELPER FUNCTIONS
+*/
+
+// Converts from an id to an openGL compatible color 
+const convert_id2color = (id) => {
+    if (id > 2 << (16 * 3)) return vec4.fromValues(0.0, 0.0, 0.0, 1.0);
+    const a = (id >> (16 * 0)) & (255);
+    const b = (id >> (16 * 1)) & (255);
+    const c = (id >> (16 * 2)) & (255);
+    return vec4.fromValues(a / 255.0, b / 255.0, c / 255.0, 1.0);
+}
+
+// Gets the id from the color in OpenGL
+const convert_color2id = (color) => {
+    return (color[0] << (16 * 0)) | (color[1] << (16 * 1)) | (color[2] << (16 * 2));
+}
+
+// Converts from a list of vectors to glsl compatible vectors list
+const convert2gl_vec_list = (vectors) => {
+    const size = vectors.length * 4;
+    const glVecList = new Float32Array(size);
+    vectors.forEach(function(vector, index) {
+        for (let i = 0; i < 4; i++) {
+            glVecList[index * 4 + i] = vector[i];
+        }
+    });
+    return glVecList;
+}
+
+//Converts a list of vec3 to a buffer usable by openGL.
+const convert2gl_vec3_list = (vectors) => {
+    const size = vectors.length * 3;
+    const glVec3List = new Float32Array(size);
+    vectors.forEach(function(vector, index) {
+        for (let i = 0; i < 3; i++) {
+            glVec3List[index * 3 + i] = vector[i];
+        }
+    });
+    return glVec3List;
+}
+
+// This is a recursive function that loops to divide the indices and vertices based on the given resolution
+const subdivide = (resolution, buffers) => {
+    if (resolution == 0) return;
+
+    const new_points = new Map();
+    const new_indices = [];
+
+    for (let i = 0; i < buffers.indices.buffer.length; i += 3) {
+
+        const p1 = buffers.indices.buffer[i + 0];
+        const p2 = buffers.indices.buffer[i + 1];
+        const p3 = buffers.indices.buffer[i + 2];
+
+        const p1p2 = getNewIndices(p1, p2, buffers.points.buffer, new_points);
+        const p2p3 = getNewIndices(p2, p3, buffers.points.buffer, new_points);
+        const p3p1 = getNewIndices(p3, p1, buffers.points.buffer, new_points);
+
+        new_indices.push(p1, p1p2, p3p1);
+        new_indices.push(p2, p2p3, p1p2);
+        new_indices.push(p3, p3p1, p2p3);
+        new_indices.push(p1p2, p2p3, p3p1);
+
+    }
+
+    buffers.indices.buffer = new_indices;
+    subdivide(resolution - 1, buffers);
 }
